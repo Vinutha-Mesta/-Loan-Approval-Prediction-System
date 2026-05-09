@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LoanIQ — Loan Approval Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0f1a;
+      --surface:   #111827;
+      --card:      #161d2e;
+      --border:    #1f2d47;
+      --accent:    #3b82f6;
+      --accent2:   #06b6d4;
+      --green:     #10b981;
+      --red:       #ef4444;
+      --yellow:    #f59e0b;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --font-head: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── GRID BG ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(11,15,26,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2.5rem;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      font-family: var(--font-head);
+      font-size: 1.35rem; font-weight: 800;
+      letter-spacing: -.03em;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-badge {
+      background: rgba(59,130,246,.15);
+      border: 1px solid rgba(59,130,246,.3);
+      color: var(--accent);
+      font-size: .7rem; font-weight: 500; letter-spacing: .08em;
+      padding: .3rem .8rem; border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 5rem 1.5rem 3rem;
+    }
+    .hero h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -.04em;
+      margin-bottom: 1rem;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 480px; margin: 0 auto;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .container {
+      position: relative; z-index: 1;
+      max-width: 880px; margin: 0 auto;
+      padding: 0 1.5rem 6rem;
+    }
+
+    /* ── FORM CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-family: var(--font-head);
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.8rem;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .card-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    /* ── FIELD GRID ── */
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.2rem;
+    }
+    .field { display: flex; flex-direction: column; gap: .45rem; }
+    label {
+      font-size: .78rem; font-weight: 500;
+      letter-spacing: .04em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    input, select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .7rem 1rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: .95rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+    select option { background: var(--surface); }
+
+    /* ── SUBMIT ── */
+    .submit-wrap { text-align: center; margin-top: 2.2rem; }
+    button#predictBtn {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-family: var(--font-head);
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: .04em;
+      border: none; border-radius: 12px;
+      padding: .9rem 3rem;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, opacity .15s;
+      box-shadow: 0 4px 24px rgba(59,130,246,.35);
+    }
+    button#predictBtn:hover  { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(59,130,246,.5); }
+    button#predictBtn:active { transform: translateY(0);    opacity: .9; }
+    button#predictBtn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── RESULT CARD ── */
+    #resultCard {
+      display: none;
+      border-radius: 20px;
+      padding: 2.5rem;
+      border: 1px solid var(--border);
+      animation: slideUp .4s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #resultCard.approved { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.35); }
+    #resultCard.rejected { background: rgba(239,68,68,.08);  border-color: rgba(239,68,68,.35); }
+
+    .result-header {
+      display: flex; align-items: center; gap: 1.2rem;
+      margin-bottom: 1.8rem;
+    }
+    .result-icon {
+      width: 64px; height: 64px; border-radius: 16px;
+      display: grid; place-items: center;
+      font-size: 2rem; flex-shrink: 0;
+    }
+    .approved .result-icon { background: rgba(16,185,129,.15); }
+    .rejected .result-icon { background: rgba(239,68,68,.15); }
+
+    .result-title {
+      font-family: var(--font-head);
+      font-size: 2rem; font-weight: 800;
+      letter-spacing: -.04em;
+    }
+    .approved .result-title { color: var(--green); }
+    .rejected .result-title { color: var(--red); }
+    .result-sub { color: var(--muted); font-size: .9rem; margin-top: .2rem; }
+
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+    .stat-box {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+    }
+    .stat-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .stat-value { font-family: var(--font-head); font-size: 1.5rem; font-weight: 700; margin-top: .3rem; }
+    .stat-green { color: var(--green); }
+    .stat-red   { color: var(--red);   }
+    .stat-yellow{ color: var(--yellow);}
+    .stat-blue  { color: var(--accent);}
+
+    /* ── PROGRESS BAR ── */
+    .prob-bar-wrap { margin-top: 1.5rem; }
+    .prob-label { display: flex; justify-content: space-between; font-size: .82rem; color: var(--muted); margin-bottom: .5rem; }
+    .prob-track {
+      height: 8px; border-radius: 99px;
+      background: var(--border); overflow: hidden;
+    }
+    .prob-fill {
+      height: 100%; border-radius: 99px;
+      transition: width 1s cubic-bezier(.34,1.56,.64,1);
+      background: linear-gradient(90deg, var(--accent), var(--green));
+    }
+    .approved .prob-fill { background: linear-gradient(90deg, var(--accent), var(--green)); }
+    .rejected .prob-fill { background: linear-gradient(90deg, var(--yellow), var(--red)); }
+
+    /* ── LOADER ── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle; margin-right: .5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── ERROR ── */
+    #errorMsg {
+      display: none;
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #fca5a5;
+      border-radius: 12px;
+      padding: 1rem 1.4rem;
+      margin-bottom: 1rem;
+      font-size: .9rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      color: var(--muted);
+      font-size: .8rem;
+      padding-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">LoanIQ</div>
+  <div class="nav-badge">ML Powered</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Loan Approval<br><span>Prediction System</span></h1>
+  <p>Enter applicant details to get an instant ML-powered decision with confidence score.</p>
+</div>
+
+<!-- FORM -->
+<div class="container">
+
+  <div id="errorMsg"></div>
+
+  <div class="card">
+    <div class="card-title">Personal Information</div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Gender</label>
+        <select id="Gender">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Married</label>
+        <select id="Married">
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dependents</label>
+        <select id="Dependents">
+          <option value="0">0</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3+">3+</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Education</label>
+        <select id="Education">
+          <option value="Graduate">Graduate</option>
+          <option value="Not Graduate">Not Graduate</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Self Employed</label>
+        <select id="Self_Employed">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Property Area</label>
+        <select id="Property_Area">
+          <option value="Urban">Urban</option>
+          <option value="Semiurban">Semiurban</option>
+          <option value="Rural">Rural</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Financial Details</div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Applicant Income (₹)</label>
+        <input type="number" id="ApplicantIncome" placeholder="e.g. 5000" min="0"/>
+      </div>
+      <div class="field">
+        <label>Co-applicant Income (₹)</label>
+        <input type="number" id="CoapplicantIncome" placeholder="e.g. 2000" min="0"/>
+      </div>
+      <div class="field">
+        <label>Loan Amount (₹ thousands)</label>
+        <input type="number" id="LoanAmount" placeholder="e.g. 150" min="1"/>
+      </div>
+      <div class="field">
+        <label>Loan Term (months)</label>
+        <select id="Loan_Amount_Term">
+          <option value="120">120</option>
+          <option value="180">180</option>
+          <option value="240">240</option>
+          <option value="360" selected>360</option>
+          <option value="480">480</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Credit History</label>
+        <select id="Credit_History">
+          <option value="1">Good (1)</option>
+          <option value="0">Bad (0)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-wrap">
+    <button id="predictBtn" onclick="predict()">Predict Loan Approval</button>
+  </div>
+
+  <!-- RESULT -->
+  <div id="resultCard" style="margin-top:1.5rem"></div>
+
+</div>
+
+<footer>LoanIQ · Loan Approval Prediction System · Powered by Machine Learning</footer>
+
+<script>
+const API = "http://localhost:5000/predict";
+
+function showError(msg) {
+  const el = document.getElementById("errorMsg");
+  el.textContent = "⚠ " + msg;
+  el.style.display = "block";
+  setTimeout(() => { el.style.display = "none"; }, 5000);
+}
+
+async function predict() {
+  const btn = document.getElementById("predictBtn");
+  const resultCard = document.getElementById("resultCard");
+  document.getElementById("errorMsg").style.display = "none";
+  resultCard.style.display = "none";
+
+  // Gather values
+  const fields = ["Gender","Married","Dependents","Education","Self_Employed",
+                  "ApplicantIncome","CoapplicantIncome","LoanAmount",
+                  "Loan_Amount_Term","Credit_History","Property_Area"];
+  const payload = {};
+  for (const f of fields) {
+    const el = document.getElementById(f);
+    if (!el) { showError("Field not found: " + f); return; }
+    const val = el.value.trim();
+    if (val === "") { showError("Please fill all fields."); return; }
+    payload[f] = isNaN(val) ? val : Number(val);
+  }
+
+  // Loading state
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Analyzing...';
+
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.error || "Server error"); return; }
+    renderResult(data);
+  } catch (e) {
+    showError("Cannot reach the backend. Make sure app.py is running on port 5000.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Predict Loan Approval";
+  }
+}
+
+function renderResult(data) {
+  const approved = data.prediction === 1;
+  const card = document.getElementById("resultCard");
+
+  const riskColor = {
+    "Low Risk":    "stat-green",
+    "Medium Risk": "stat-yellow",
+    "High Risk":   "stat-red"
+  }[data.risk_level] || "stat-blue";
+
+  card.className = approved ? "approved" : "rejected";
+  card.innerHTML = `
+    <div class="result-header">
+      <div class="result-icon">${approved ? "✅" : "❌"}</div>
+      <div>
+        <div class="result-title">${data.status}</div>
+        <div class="result-sub">ML model prediction with ${data.confidence}% confidence</div>
+      </div>
+    </div>
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-label">Decision</div>
+        <div class="stat-value ${approved ? 'stat-green' : 'stat-red'}">${data.status}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Confidence</div>
+        <div class="stat-value stat-blue">${data.confidence}%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Approval Probability</div>
+        <div class="stat-value stat-blue">${data.approval_probability}%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Risk Level</div>
+        <div class="stat-value ${riskColor}">${data.risk_level}</div>
+      </div>
+    </div>
+    <div class="prob-bar-wrap">
+      <div class="prob-label">
+        <span>Approval Probability</span>
+        <span>${data.approval_probability}%</span>
+      </div>
+      <div class="prob-track">
+        <div class="prob-fill" id="probFill" style="width:0%"></div>
+      </div>
+    </div>
+  `;
+
+  card.style.display = "block";
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  // Animate bar
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.getElementById("probFill").style.width = data.approval_probability + "%";
+    });
+  });
+}
+</script>
+</body>
+</html>
